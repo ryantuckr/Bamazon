@@ -69,8 +69,6 @@ function menu() {
             //console.log(res);
             var chosenItem;
             var cost;
-
-
             for (var i = 0; i < res.length; i++) {
                 if (res[i].item_id === answer.itemid) {
                     //console.log("user input = " + answer.itemid);
@@ -80,7 +78,9 @@ function menu() {
                     cost = res[i].price * answer.quantity;
                     //console.log("Total Order Cost = " + cost);
                 }
+
             }
+
             //console.log(chosenItem.stock_quantity);
             //console.log(answer.quantity);
             //console.log(chosenItem.stock_quantity >= answer.quantity);
@@ -108,53 +108,50 @@ function menu() {
                         console.log("-----------------------------------------------");
                         console.log("Your order total is: $" + cost.toFixed(2));
                         console.log("-----------------------------------------------");
-                        
-                        
-                        inquirer.prompt([ 
-                            {
+
+
+                        inquirer.prompt([{
                             type: "list",
                             name: "yesorno",
                             message: "Would you like to place another order?",
                             choices: ["Yes", "No"]
-                            },
-                        ]).then(answers => {
+                        }, ]).then(answers => {
                             if (answers.yesorno === "Yes") {
+                                logData(answers);
                                 menu();
-                            }else {
+                            } else {
                                 console.log("Thank you for your order.")
                                 console.log("-----------------------------------------------");
                                 connection.end();
                             }
                         });
-                       
+
                     });
 
             } else {
                 console.log("Unfortunatly, we DO NOT have enough in stock to cover this order.")
                 console.log("-----------------------------------------------");
-                
-                //insuirer prompt want to order any thing else?
-                    //if yes then run menu
-                    //if not then connection end
 
-                    inquirer.prompt([ 
-                        {
-                        type: "list",
-                        name: "yesorno",
-                        message: "Would you like to place another order for a different item?",
-                        choices: ["Yes", "No"]
-                        },
-                    ]).then(answers => {
-                        if (answers.yesorno === "Yes") {
-                            menu();
-                        }else {
-                            console.log("Please check back soon as inventory levels change often.")
-                            console.log("-----------------------------------------------");
-                            connection.end();
-                        }
-                    });
-               
-                
+                //insuirer prompt want to order any thing else?
+                //if yes then run menu
+                //if not then connection end
+
+                inquirer.prompt([{
+                    type: "list",
+                    name: "yesorno",
+                    message: "Would you like to place another order for a different item?",
+                    choices: ["Yes", "No"]
+                }, ]).then(answers => {
+                    if (answers.yesorno === "Yes") {
+                        menu();
+                    } else {
+                        console.log("Please check back soon as inventory levels change often.")
+                        console.log("-----------------------------------------------");
+                        connection.end();
+                    }
+                });
+
+
             }
         });
 
@@ -162,8 +159,8 @@ function menu() {
 
 };
 
-function logData() {
-    fs.appendFile("logfile.txt", "!!!!!!did this work!!!!!", function (err) {
+function logData(message) {
+    fs.appendFile("logfile.txt", message, function (err) {
         if (err) {
             return console.log(err);
         }

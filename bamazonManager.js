@@ -16,7 +16,7 @@ var connection = mysql.createConnection({
 
 connection.connect(function (err) {
     if (err) throw err;
-    console.log("CONNECTED TO MYSQL AS ID " + connection.threadId);
+    //console.log("CONNECTED TO MYSQL AS ID " + connection.threadId);
     menu();
 });
 
@@ -76,7 +76,6 @@ function viewProducts() {
     })
 }
 
-
 function lowInventory() {
     //console.log("this will show all the low inventory stuff");
     //If a manager selects `View Low Inventory`, then it should list 
@@ -112,92 +111,153 @@ function addInventory() {
         for (i = 0; i < res.length; i++) {
             console.log("Item ID : " + res[i].item_id + " | " + " Product: " + res[i].product_name + " | ", "Department: " + res[i].department_name + " | ", "Price: " + res[i].price + " | ", "Inventory: " + res[i].stock_quantity);
         };
-    })
 
-    inquirer.prompt([{
-            type: "prompt",
-            name: "intro",
-            message: "ADD INVENTORY - MANAGER VIEW press [ENTER]",
-        },
 
-        {
-            type: "prompt",
-            name: "itemid",
-            message: "What Item ID [example: abc1234] are you adding inventory too?",
-        },
-        {
-            type: "prompt",
-            name: "quantity",
-            message: "How much inventory are you adding?",
-            validate: function (value) {
-                if (isNaN(value) === false) {
-                    return true;
+        inquirer.prompt([{
+                type: "prompt",
+                name: "intro",
+                message: "ADD INVENTORY - MANAGER VIEW press [ENTER]",
+            },
+
+            {
+                type: "prompt",
+                name: "itemid",
+                message: "What Item ID [example: abc1234] are you adding inventory too?",
+            },
+            {
+                type: "prompt",
+                name: "quantity",
+                message: "How much inventory are you adding?",
+                validate: function (value) {
+                    if (isNaN(value) === false) {
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
             }
-        }
-    ]).then(function (answer) {
-        var chosenItem;
-        var addedQuantity;
-        for (var i = 0; i < res.length; i++) {
-            if (res[i].item_id === answer.itemid) {
-                chosenItem = res[i];
+        ]).then(function (answer) {
+            var chosenItem;
+            var addedQuantity;
+            for (var i = 0; i < res.length; i++) {
+                if (res[i].item_id === answer.itemid) {
+                    chosenItem = res[i];
+                }
+
+            }
+            if (chosenItem) {
+                //console.log(chosenItem)
+                var updatedQuantity = parseInt(answer.quantity) + parseInt(chosenItem.stock_quantity);
+
+                // console.log("Current quantity " + chosenItem.stock_quantity);
+                // console.log("inputed quantity " + answer.quantity);
+                // console.log("updated quantity " + updatedQuantity);
+
+                connection.query(
+                    "UPDATE products set ? where ?", [{
+                            stock_quantity: updatedQuantity
+                        },
+                        {
+                            id: chosenItem.id
+                        }
+
+                    ],
+                    function (err) {
+                        if (err) throw err;
+                        console.log("-----------------------------------------------");
+                        console.log(answer.quantity + " " + chosenItem.product_name + "(s)" + " have been added to the inventory");
+                        console.log("-----------------------------------------------");
+
+                        inquirer.prompt([{
+                            type: "list",
+                            name: "yesorno",
+                            message: "Do you need to add inventory to other Item IDs?",
+                            choices: ["Yes", "No"]
+                        }, ]).then(answers => {
+                            if (answers.yesorno === "Yes") {
+                                addInventory();
+                            } else {
+                                console.log("Exiting to menu.")
+                                console.log("-----------------------------------------------");
+                                menu();
+                            }
+                        });
+
+                    });
+
+
             } else {
                 console.log("that is not a valid ID Item")
                 console.log("please try again")
                 menu();
             }
-        }
 
-        addedQuantity = chosenItem.stock_quantity + answer.quantity;
-        //console.log("updated quantity: " + updatedQuantity);
-
-        connection.query(
-            "UPDATE products set ? where ?", [{
-                    stock_quantity: addedQuantity
-                },
-                {
-                    id: chosenItem.id
-                }
-
-            ],
-            function (err) {
-                if (err) throw err;
-                console.log("-----------------------------------------------");
-                console.log(chosenQuantity + " have been added to inventory under Item ID: " + chosenItem.id);
-                console.log("-----------------------------------------------");
-
-                inquirer.prompt([{
-                    type: "list",
-                    name: "yesorno",
-                    message: "Do you need to add inventory to other Item IDs?",
-                    choices: ["Yes", "No"]
-                }, ]).then(answers => {
-                    if (answers.yesorno === "Yes") {
-                        addInventory();
-                    } else {
-                        console.log("Exiting to menu.")
-                        console.log("-----------------------------------------------");
-                        menu();
-                    }
-                });
-
-            });
-    });
+        });
+    })
 }
-
-
-
-
 
 function addNewProduct() {
     console.log("this will prompt to add a new product ");
     //* If a manager selects `Add New Product`, it should allow the manager 
     //to add a completely new product to the store.
+
+    inquirer.prompt([{
+            type: "prompt",
+            name: "intro",
+            message: "ADD INVENTORY NEW PRODUCT - MANAGER VIEW press [ENTER]",
+        },
+
+        {
+            type: "prompt",
+            name: "itemid",
+            message: "What is the ITEM ID?",
+        },
+        {
+            type: "prompt",
+            name: "productname",
+            message: "What is the Product Name?",
+        },
+        {
+            type: "prompt",
+            name: "departmentname",
+            message: "What is the Department Name?",
+        },
+        {
+            type: "prompt",
+            name: "price",
+            message: "What is the Price?",
+        },
+        {
+            type: "prompt",
+            name: "quantity",
+            message: "What is the quantity?",
+        },
+
+
+    ]).then(answers => {
+        //console.log(answers.itemid, answers.productname, answers.departmentname, answers.price, answers.quantity)
+
+        var query = connection.query(
+            "INSERT INTO products SET ?", {
+                item_id: answers.itemid,
+                product_name: answers.productname,
+                department_name: answers.departmentname,
+                price: answers.price,
+                stock_quantity: answers.quantity
+            },
+
+            function (err, res) {
+                //console.log(res.affectedRows + " products updated!\n");
+                // Call deleteProduct AFTER the UPDATE completes
+                //deleteProduct();
+                //console.log(err);
+                //console.log(answers.productname + " has be added successfully")
+                viewProducts();
+            }
+        );
+
+    });
+
 }
-
-
-
 
 function exit() {
     connection.end();
